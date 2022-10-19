@@ -22,6 +22,8 @@ import {
   missingClient,
 } from "./errors";
 
+import {serialize, deserialize} from 'json-immutable';
+
 export type Mapping<T> = {
   [K in keyof T]?: boolean;
 };
@@ -98,13 +100,13 @@ const internalEnhancer = <T>(options: {
         switch (action.type) {
           case ACTION_TYPES.PATCH_REDUX_STATE:
             return {
-              ...state,
-              ...action.state,
+              ...deserialize(state),
+              ...deserialize(action.state),
             };
           case ACTION_TYPES.INIT_STORAGE:
             return {
-              ...state,
-              ...action.state,
+              ...deserialize(state),
+              ...deserialize(action.state),
               liveblocks: {
                 ...state.liveblocks,
                 isStorageLoading: false,
@@ -112,7 +114,7 @@ const internalEnhancer = <T>(options: {
             };
           case ACTION_TYPES.START_LOADING_STORAGE:
             return {
-              ...state,
+              ...deserialize(state),
               liveblocks: {
                 ...state.liveblocks,
                 isStorageLoading: true,
@@ -120,7 +122,7 @@ const internalEnhancer = <T>(options: {
             };
           case ACTION_TYPES.UPDATE_CONNECTION: {
             return {
-              ...state,
+              ...deserialize(state),
               liveblocks: {
                 ...state.liveblocks,
                 connection: action.connection,
@@ -129,7 +131,7 @@ const internalEnhancer = <T>(options: {
           }
           case ACTION_TYPES.UPDATE_OTHERS: {
             return {
-              ...state,
+              ...deserialize(state),
               liveblocks: {
                 ...state.liveblocks,
                 others: action.others,
@@ -355,6 +357,10 @@ function patchLiveblocksStorage<O extends LsonObject>(
   mapping: Mapping<O>
 ) {
   for (const key in mapping) {
+    // first we must convert old and new states to serializable primitives if they are immutable
+    let oldStateJson = serialize(oldState);
+    let newStateJson = serialize(newState);
+
     if (
       process.env.NODE_ENV !== "production" &&
       typeof newState[key] === "function"
@@ -362,8 +368,8 @@ function patchLiveblocksStorage<O extends LsonObject>(
       throw mappingToFunctionIsNotAllowed("value");
     }
 
-    if (oldState[key] !== newState[key]) {
-      patchLiveObjectKey(root, key, oldState[key], newState[key]);
+    if (oldStateJson[key] !== newStateJson[key]) {
+      patchLiveObjectKey(root, key, oldStateJson[key], newStateJson[key]);
     }
   }
 }

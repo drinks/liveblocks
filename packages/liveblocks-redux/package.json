@@ -34,7 +34,8 @@
   },
   "dependencies": {
     "@liveblocks/client": "0.18.5",
-    "@liveblocks/core": "0.18.5"
+    "@liveblocks/core": "0.18.5",
+    "json-immutable": "^0.5.0"
   },
   "peerDependencies": {
     "redux": "^4"
